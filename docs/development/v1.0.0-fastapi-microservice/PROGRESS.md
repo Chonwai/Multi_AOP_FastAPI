@@ -7,7 +7,7 @@
 ## 📊 總體進度
 
 **當前階段**：階段 0 - 準備工作  
-**總體進度**：30% 🟡  
+**總體進度**：60% 🟡  
 **開始日期**：2024-12-19  
 **預計完成日期**：待定
 
@@ -51,14 +51,14 @@
   - ✅ 添加序列標準化函數
 
 **進行中的任務**：
-- 無（階段0和階段1已完成）
+- 無（階段0、階段1和階段2已完成）
 
 **下一步計劃**：
-- [ ] 開始階段2：API層
-  - [ ] 任務 2.1：FastAPI 應用設置
-  - [ ] 任務 2.2：Pydantic 模型定義
-  - [ ] 任務 2.3：API 端點實現
-  - [ ] 任務 2.4：錯誤處理中間件
+- [ ] 開始階段3：Docker化
+  - [ ] 任務 3.1：Dockerfile 創建
+  - [ ] 任務 3.2：docker-compose.yml 配置
+  - [ ] 任務 3.3：環境變量管理
+  - [ ] 任務 3.4：容器測試和驗證
 
 **備註**：
 - 階段0已完成！✅
@@ -69,6 +69,53 @@
 - 日誌配置已添加（使用標準庫，適合MVP版本）
 
 **階段1完成內容**：
+- ✅ 任務 1.1：模型管理器實現（完成）
+  - ✅ 實現線程安全的單件模式（雙重檢查鎖定）
+  - ✅ 模型加載邏輯（支持不同checkpoint格式）
+  - ✅ 設備管理（CPU/CUDA自動檢測）
+  - ✅ 錯誤處理和日誌記錄
+- ✅ 任務 1.2：數據預處理重構（完成）
+  - ✅ 將模型定義遷移到app/core/models/
+  - ✅ 創建數據處理模塊（processors.py）
+  - ✅ 實現InMemorySequenceDataset（不依賴CSV）
+  - ✅ 實現create_in_memory_loader函數
+  - ✅ 優化collate_fn支持動態批次
+- ✅ 任務 1.3：預測服務實現（完成）
+  - ✅ 實現PredictionService類
+  - ✅ 實現predict_single()方法
+  - ✅ 實現predict_batch()方法
+  - ✅ 實現預測結果格式化（概率、置信度、類別）
+  - ✅ 錯誤處理和驗證集成
+
+**階段2完成內容**：
+- ✅ 任務 2.1：FastAPI 應用設置（完成）
+  - ✅ 更新main.py集成所有組件
+  - ✅ 實現依賴注入（get_model_manager, get_prediction_service）
+  - ✅ 應用啟動事件（可選預加載模型）
+  - ✅ 應用關閉事件（清理資源）
+  - ✅ 註冊API路由（v1版本）
+- ✅ 任務 2.2：Pydantic 模型定義（完成）
+  - ✅ SinglePredictionRequest（單個序列預測請求）
+  - ✅ BatchPredictionRequest（批次預測請求）
+  - ✅ SinglePredictionResponse（單個預測響應）
+  - ✅ BatchPredictionResponse（批次預測響應）
+  - ✅ ModelInfoResponse（模型信息響應）
+  - ✅ HealthResponse（健康檢查響應）
+  - ✅ ErrorResponse（統一錯誤響應格式）
+- ✅ 任務 2.3：API 端點實現（完成）
+  - ✅ POST /api/v1/predict/single（單個序列預測）
+  - ✅ POST /api/v1/predict/batch（批次預測）
+  - ✅ GET /api/v1/model/info（模型信息）
+  - ✅ GET /health（健康檢查，已更新）
+  - ✅ 所有端點的錯誤處理
+- ✅ 任務 2.4：錯誤處理中間件（完成）
+  - ✅ 全局異常處理器（register_exception_handlers）
+  - ✅ ValidationError處理（422）
+  - ✅ ModelLoadError處理（503）
+  - ✅ PredictionError處理（500）
+  - ✅ RequestValidationError處理（422）
+  - ✅ 通用異常處理（500）
+  - ✅ 統一錯誤響應格式
 - ✅ 任務 1.1：模型管理器實現（完成）
   - ✅ 實現線程安全的單件模式（雙重檢查鎖定）
   - ✅ 模型加載邏輯（支持不同checkpoint格式）
@@ -127,17 +174,17 @@
 
 ---
 
-### 階段 2：API 層 ⚪
+### 階段 2：API 層 ✅
 
-**進度**：0%  
-**開始日期**：待定  
-**預計完成日期**：待定
+**進度**：100%  
+**開始日期**：2024-12-19  
+**完成日期**：2024-12-19
 
 **任務狀態**：
-- [ ] 任務 2.1：FastAPI 應用設置
-- [ ] 任務 2.2：Pydantic 模型定義
-- [ ] 任務 2.3：API 端點實現
-- [ ] 任務 2.4：錯誤處理中間件
+- [x] 任務 2.1：FastAPI 應用設置（完成）
+- [x] 任務 2.2：Pydantic 模型定義（完成）
+- [x] 任務 2.3：API 端點實現（完成）
+- [x] 任務 2.4：錯誤處理中間件（完成）
 
 ---
 

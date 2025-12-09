@@ -3,7 +3,7 @@ Prediction Service
 Handles prediction logic for single and batch sequences
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import torch
 import time
 
@@ -11,7 +11,7 @@ from app.config import settings
 from app.core.data.dataloader import create_in_memory_loader
 from app.services.model_manager import ModelManager
 from app.utils.exceptions import PredictionError, ValidationError
-from app.utils.validators import validate_sequences, normalize_sequence
+from app.utils.validators import validate_sequence, validate_sequences
 from app.utils.logging_config import get_logger
 
 logger = get_logger(__name__)

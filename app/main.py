@@ -8,6 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.utils.logging_config import setup_logging, get_logger
+from app.services.model_manager import ModelManager
+from app.api.v1.routes import router as v1_router
+from app.api.middleware import register_exception_handlers
+from app.models.response import HealthResponse
 
 # Setup logging
 setup_logging()
@@ -22,6 +26,9 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# Register exception handlers
+register_exception_handlers(app)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +37,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routers
+app.include_router(v1_router)
 
 
 @app.on_event("startup")
@@ -40,7 +50,20 @@ async def startup_event():
     logger.info(f"API running on {settings.API_HOST}:{settings.API_PORT}")
     logger.info(f"Model path: {settings.MODEL_PATH}")
     logger.info(f"Device: {settings.DEVICE}")
-    # Model will be loaded here via dependency injection in future stages
+    
+    # Pre-load model on startup (optional, model will be loaded lazily if not done here)
+    try:
+        model_manager = ModelManager()
+        if not model_manager.is_loaded():
+            logger.info("Pre-loading model on startup...")
+            model_manager.load_model()
+            logger.info("Model loaded successfully on startup")
+        else:
+            logger.info("Model already loaded")
+    except Exception as e:
+        logger.warning(f"Failed to pre-load model on startup: {str(e)}")
+        logger.warning("Model will be loaded lazily on first prediction request")
+    
     logger.info("Application startup complete")
 
 
@@ -56,11 +79,12 @@ async def root():
     return {
         "message": "Multi-AOP Prediction API",
         "version": "1.0.0",
-        "docs": "/docs"
+        "docs": "/docs",
+        "api_version": "v1"
     }
 
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 async def health_check():
     """
     Health check endpoint
@@ -68,11 +92,27 @@ async def health_check():
     Returns:
         Health status with model loading information
     """
-    # TODO: Check model loading status when model manager is implemented
-    return {
-        "status": "healthy",
-        "model_loaded": False,  # Will be updated when model manager is implemented
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "environment": settings.ENVIRONMENT
-    }
+    try:
+        model_manager = ModelManager()
+        model_loaded = model_manager.is_loaded()
+        
+        status_value = "healthy" if model_loaded else "unhealthy"
+        message = "" if model_loaded else "Model not loaded. Please wait for initialization."
+        
+        return HealthResponse(
+            status=status_value,
+            model_loaded=model_loaded,
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            environment=settings.ENVIRONMENT,
+            message=message
+        )
+    except Exception as e:
+        logger.error(f"Error in health check: {str(e)}")
+        return HealthResponse(
+            status="unhealthy",
+            model_loaded=False,
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            environment=settings.ENVIRONMENT,
+            message=f"Health check failed: {str(e)}"
+        )
 

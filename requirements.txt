@@ -1,0 +1,28 @@
+# FastAPI and web server
+fastapi>=0.104.0,<0.105.0
+uvicorn[standard]>=0.24.0,<0.25.0
+
+# Pydantic for validation and settings
+pydantic>=2.5.0,<3.0.0
+pydantic-settings>=2.1.0,<3.0.0
+
+# PyTorch and deep learning
+torch>=2.2.0,<2.3.0
+torch-geometric>=2.4.0,<2.5.0
+
+# xLSTM
+xlstm>=2.0.2,<3.0.0
+
+# Chemistry and molecular processing
+rdkit-pypi>=2022.9.5
+
+# Data processing
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<2.0.0
+
+# Utilities
+python-dotenv>=1.0.0,<2.0.0
+
+# Optional: Logging (if using loguru)
+# loguru>=0.7.0,<1.0.0
+

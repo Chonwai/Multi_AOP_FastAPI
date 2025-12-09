@@ -7,7 +7,7 @@
 ## 📊 總體進度
 
 **當前階段**：階段 0 - 準備工作  
-**總體進度**：60% 🟡  
+**總體進度**：85% 🟡  
 **開始日期**：2024-12-19  
 **預計完成日期**：待定
 
@@ -51,14 +51,11 @@
   - ✅ 添加序列標準化函數
 
 **進行中的任務**：
-- 無（階段0、階段1和階段2已完成）
+- 🟡 任務 3.4：容器測試和驗證（待測試）
 
 **下一步計劃**：
-- [ ] 開始階段3：Docker化
-  - [ ] 任務 3.1：Dockerfile 創建
-  - [ ] 任務 3.2：docker-compose.yml 配置
-  - [ ] 任務 3.3：環境變量管理
-  - [ ] 任務 3.4：容器測試和驗證
+- [ ] 完成任務 3.4：容器測試和驗證
+- [ ] 開始階段4：驗證和文檔（MVP版本）
 
 **備註**：
 - 階段0已完成！✅
@@ -88,6 +85,71 @@
   - ✅ 錯誤處理和驗證集成
 
 **階段2完成內容**：
+- ✅ 任務 2.1：FastAPI 應用設置（完成）
+  - ✅ 更新main.py集成所有組件
+  - ✅ 實現依賴注入（get_model_manager, get_prediction_service）
+  - ✅ 應用啟動事件（可選預加載模型）
+  - ✅ 應用關閉事件（清理資源）
+  - ✅ 註冊API路由（v1版本）
+- ✅ 任務 2.2：Pydantic 模型定義（完成）
+  - ✅ SinglePredictionRequest（單個序列預測請求）
+  - ✅ BatchPredictionRequest（批次預測請求）
+  - ✅ SinglePredictionResponse（單個預測響應）
+  - ✅ BatchPredictionResponse（批次預測響應）
+  - ✅ ModelInfoResponse（模型信息響應）
+  - ✅ HealthResponse（健康檢查響應）
+  - ✅ ErrorResponse（統一錯誤響應格式）
+- ✅ 任務 2.3：API 端點實現（完成）
+  - ✅ POST /api/v1/predict/single（單個序列預測）
+  - ✅ POST /api/v1/predict/batch（批次預測）
+  - ✅ GET /api/v1/model/info（模型信息）
+  - ✅ GET /health（健康檢查，已更新）
+  - ✅ 所有端點的錯誤處理
+- ✅ 任務 2.4：錯誤處理中間件（完成）
+  - ✅ 全局異常處理器（register_exception_handlers）
+  - ✅ ValidationError處理（422）
+  - ✅ ModelLoadError處理（503）
+  - ✅ PredictionError處理（500）
+  - ✅ RequestValidationError處理（422）
+  - ✅ 通用異常處理（500）
+  - ✅ 統一錯誤響應格式
+
+**階段3完成內容**：
+- ✅ 任務 3.1：Dockerfile 創建（完成）
+  - ✅ 使用conda-based Dockerfile（推薦，用於生產環境）
+  - ✅ 多階段構建設計（構建階段和運行階段）
+  - ✅ 使用conda-forge安裝RDKit（推薦方式）
+  - ✅ 提供pip-based Dockerfile作為替代方案
+  - ✅ 安裝系統依賴（RDKit所需）
+  - ✅ 安裝Python依賴（從requirements.txt，排除rdkit-pypi）
+  - ✅ 複製應用代碼和模型文件
+  - ✅ 設置非root用戶（安全）
+  - ✅ 健康檢查配置
+  - ✅ 暴露端口8000
+- ✅ 任務 3.2：docker-compose.yml 配置（完成）
+  - ✅ 定義服務配置（multi-aop-api）
+  - ✅ 構建配置
+  - ✅ 環境變量配置（從.env文件讀取）
+  - ✅ 端口映射（${API_PORT:-8000}:8000）
+  - ✅ 卷掛載（模型文件、日誌目錄）
+  - ✅ 健康檢查配置
+  - ✅ 網絡配置（multi-aop-network）
+  - ✅ 重啟策略（unless-stopped）
+- ✅ 任務 3.3：環境變量管理（完成）
+  - ✅ 更新.env.example文件（所有配置項）
+  - ✅ 更新Dockerfile使用環境變量
+  - ✅ 更新docker-compose.yml使用環境變量
+  - ✅ 創建.dockerignore文件
+  - ✅ 創建docker/README.md文檔
+  - ✅ 創建docker/Makefile（便捷命令）
+- 🟡 任務 3.4：容器測試和驗證（待測試）
+  - ⚪ 構建Docker鏡像測試
+  - ⚪ 運行容器測試
+  - ⚪ 健康檢查端點測試
+  - ⚪ API端點測試
+  - ⚪ 模型加載測試
+  - ⚪ 性能測試
+  - ⚪ 日誌輸出測試
 - ✅ 任務 2.1：FastAPI 應用設置（完成）
   - ✅ 更新main.py集成所有組件
   - ✅ 實現依賴注入（get_model_manager, get_prediction_service）
@@ -188,17 +250,17 @@
 
 ---
 
-### 階段 3：Docker 化 ⚪
+### 階段 3：Docker 化 🟡
 
-**進度**：0%  
-**開始日期**：待定  
-**預計完成日期**：待定
+**進度**：75%  
+**開始日期**：2024-12-19  
+**預計完成日期**：2024-12-19
 
 **任務狀態**：
-- [ ] 任務 3.1：Dockerfile 創建
-- [ ] 任務 3.2：docker-compose.yml 配置
-- [ ] 任務 3.3：環境變量管理
-- [ ] 任務 3.4：容器測試和驗證
+- [x] 任務 3.1：Dockerfile 創建（完成）
+- [x] 任務 3.2：docker-compose.yml 配置（完成）
+- [x] 任務 3.3：環境變量管理（完成）
+- [ ] 任務 3.4：容器測試和驗證（待測試）
 
 ---
 

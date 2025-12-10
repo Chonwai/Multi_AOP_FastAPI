@@ -1,6 +1,6 @@
 # Makefile for Docker operations
 
-.PHONY: build build-pip up down logs restart shell test clean
+.PHONY: build build-pip up down logs restart shell test test-full test-quick clean health
 
 # Build Docker image using conda-based Dockerfile
 build:
@@ -29,9 +29,19 @@ restart: down up
 shell:
 	docker exec -it multi-aop-api bash
 
-# Run tests (if available)
+# Run Python unit tests (if available)
 test:
 	docker exec multi-aop-api python -m pytest tests/ -v || echo "No tests found"
+
+# Run full automated test suite
+test-full:
+	@echo "Running full test suite..."
+	@cd docker && ./test.sh
+
+# Quick health check test
+test-quick:
+	@echo "Running quick health check..."
+	@curl -s http://localhost:8000/health | jq . || echo "Service not available"
 
 # Clean up containers and images
 clean:
@@ -40,5 +50,5 @@ clean:
 
 # Health check
 health:
-	curl http://localhost:8000/health || echo "Service not available"
+	@curl -s http://localhost:8000/health | jq . || echo "Service not available"
 

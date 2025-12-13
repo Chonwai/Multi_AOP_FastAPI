@@ -47,10 +47,13 @@ ENV/
 logs/
 
 # Model files (large files)
+# Note: predict/model/*.pth is NOT ignored for Render deployment
 *.pth
 *.pt
 *.h5
 *.ckpt
+# Exception: Include model files in predict/model/ for deployment
+!predict/model/*.pth
 
 # Data files (optional, uncomment if needed)
 # data/

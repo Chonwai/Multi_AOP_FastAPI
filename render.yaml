@@ -1,0 +1,64 @@
+# Render.com 部署配置文件
+# 文檔: https://render.com/docs/blueprint-spec
+
+services:
+  # Multi-AOP FastAPI Web Service
+  - type: web
+    name: multi-aop-api
+    runtime: docker
+    plan: free  # 使用免費計劃（750小時/月）
+    
+    # Docker 配置
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+    
+    # 區域選擇（選擇最近的區域以降低延遲）
+    region: singapore  # 可選: oregon, frankfurt, singapore
+    
+    # 健康檢查
+    healthCheckPath: /health
+    
+    # 環境變量
+    envVars:
+      # API 配置
+      - key: API_HOST
+        value: 0.0.0.0
+      
+      - key: API_PORT
+        value: 8000
+      
+      # CORS 配置
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      
+      # 模型配置
+      - key: MODEL_PATH
+        value: predict/model/best_model_Oct13.pth
+      
+      - key: DEVICE
+        value: cpu
+      
+      # 序列處理配置
+      - key: SEQ_LENGTH
+        value: 50
+      
+      - key: BATCH_SIZE
+        value: 16
+      
+      - key: MAX_BATCH_SIZE
+        value: 100
+      
+      # 日誌配置
+      - key: LOG_LEVEL
+        value: INFO
+      
+      # 環境
+      - key: ENVIRONMENT
+        value: production
+    
+    # 自動部署設置
+    autoDeploy: true  # Git push 時自動部署
+    
+    # 資源配置（免費計劃）
+    # 免費計劃自動配置，無需手動設置
+

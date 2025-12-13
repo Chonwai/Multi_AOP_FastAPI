@@ -113,9 +113,9 @@ COPY predict/ /app/predict/
 # Note: This will fail if directory doesn't exist. Remove this line if not needed.
 # COPY final_model/ /app/final_model/
 
-# Note: Model files are provided via volume mount in docker-compose.yml
-# If you want to include model in image, ensure predict/model/ exists and uncomment:
-# COPY predict/model/ /app/predict/model/
+# Note: Model files are included in the image for Render deployment
+# For local development with docker-compose, you can use volume mount instead
+COPY predict/model/ /app/predict/model/
 
 # Set permissions
 RUN chown -R appuser:appuser /app

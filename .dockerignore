@@ -67,11 +67,6 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Data (exclude large data files, but include model)
-data/
-*.csv
-!predict/model/*.pth
-
 # Development files
 *.ipynb
 .ipynb_checkpoints/

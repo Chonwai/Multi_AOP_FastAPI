@@ -90,3 +90,8 @@ model/
 models/
 checkpoints/
 
+# Exception: Include source code directories
+# The app/core/models/ directory contains Python model definitions (source code)
+# NOT trained model files, so it should be tracked by Git
+!app/core/models/
+

@@ -135,4 +135,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 #   docker run ... python run_simple.py
 # Or set CMD to use Python directly:
 #   CMD ["conda", "run", "-n", "app", "python", "run_simple.py"]
-CMD ["conda", "run", "-n", "app", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 
+# Note: Use ${PORT:-8000} to support Render's PORT environment variable (default: 10000)
+# This allows the app to work on both local (8000) and Render (10000) environments
+CMD ["conda", "run", "-n", "app", "sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

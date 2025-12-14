@@ -1,7 +1,6 @@
 name: Sync to Hugging Face Hub (Production)
 on:
   push:
-    # 修改 1: 只有推送到 production 分支時才觸發
     branches: [production]
   workflow_dispatch:
 
@@ -13,22 +12,23 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
-          # 修改 2: 明確告訴 checkout action 我們要拉取 production 分支
           ref: production
 
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USERNAME: "AlchemistAIDev01"
-          SPACE_NAME: "Multi_AOP_FastAPI"
         run: |
+          # 1. 設置 Git 提交者身份 (這只是為了記錄 Commit，不影響驗證)
           git config --global user.email "alchemist.dev01@gmail.com"
           git config --global user.name "AlchemistAIDev01"
           
-          # ⚠️ 關鍵修改：直接使用 GitHub Actions 的變量替換語法
-          # 這樣在命令執行前，GitHub 會先把 Token 填進去，避免 Shell 讀不到的問題
-          git remote add space https://AlchemistAIDev01:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
+          # 2. 關鍵修正：添加一個叫 space 的遠端，但不帶 Token
+          git remote add space https://huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
           
-          # 修改 3: 把當前的分支 (production) 推送到遠端 (space) 的 main 分支
-          # 格式: git push <remote> <local_branch>:<remote_branch>
+          # 3. ⭐️ 核心修正：直接寫入 HTTP Header 進行驗證
+          # 這比把 Token 放在 URL 裡更穩定，且支援 LFS
+          # 注意：這裡是 'git config'，不是 URL
+          git config --global http.https://huggingface.co/.extraheader "Authorization: Bearer ${{ secrets.HF_TOKEN }}"
+          
+          # 4. 推送
           git push --force space production:main

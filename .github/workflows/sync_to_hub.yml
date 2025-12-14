@@ -19,20 +19,30 @@ jobs:
           git config --global user.email "alchemist.dev01@gmail.com"
           git config --global user.name "AlchemistAIDev01"
           
-          # 1. 強制清空可能存在的 credential helper
+          # 1. 驗證配置
           git config --global --unset credential.helper || true
+          git remote add space https://AlchemistAIDev01:${{ secrets.HF_ALCHEMISTAIDEV01 }}@huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
 
-          # 2. 安裝並配置 LFS (關鍵步驟！)
+          # 2. LFS 安裝與配置
           git lfs install
-          # 確保所有 .pth 和 .bin 文件都被 LFS 追蹤
+          # 明確追蹤你的大文件類型
           git lfs track "*.pth"
           git lfs track "*.bin"
           git lfs track "*.onnx"
-          
-          # 3. 添加遠端倉庫
-          git remote add space https://AlchemistAIDev01:${{ secrets.HF_ALCHEMISTAIDEV01 }}@huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
+          git lfs track "*.jpg"
+          git lfs track "*.png"
 
-          # 4. 推送 (確保 LFS 對象也能被推送)
-          # 注意：有时候 git push 不會自動推 LFS，需要先推 LFS 對象
+          # 3. ⭐️ 關鍵步驟：重新標準化 (Renormalize)
+          # 這會強制 Git 把已經存在於目錄中的大文件，根據上面的 track 規則轉換成 LFS 指針
+          git add --renormalize .
+          
+          # 如果有文件被轉換了，需要提交這個變更
+          # 如果沒有變更，commit 會失敗，所以加上 || true 忽略錯誤
+          git commit -m "Convert binary files to LFS" || true
+
+          # 4. 推送
+          # 先單獨推 LFS 對象，確保它們上去了
           git lfs push --all space production
+          
+          # 最後推代碼
           git push --force space production:main

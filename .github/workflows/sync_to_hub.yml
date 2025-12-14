@@ -1,6 +1,7 @@
 name: Sync to Hugging Face Hub (Production)
 on:
   push:
+    # 只有推送到 production 分支時才觸發
     branches: [production]
   workflow_dispatch:
 
@@ -12,23 +13,28 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
+          # 明確告訴 checkout action 我們要拉取 production 分支
           ref: production
 
       - name: Push to hub
         env:
+          # 將 Secret 注入環境變量，供下方的腳本生成 .netrc 使用
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # 1. 設置 Git 提交者身份 (這只是為了記錄 Commit，不影響驗證)
+          # 1. 設置 Git 提交者身份
           git config --global user.email "alchemist.dev01@gmail.com"
           git config --global user.name "AlchemistAIDev01"
           
-          # 2. 關鍵修正：添加一個叫 space 的遠端，但不帶 Token
+          # 2. 添加 Hugging Face 遠端倉庫
+          # 請確保下面的 URL 是完全正確的
           git remote add space https://huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
-          
-          # 3. ⭐️ 核心修正：直接寫入 HTTP Header 進行驗證
-          # 這比把 Token 放在 URL 裡更穩定，且支援 LFS
-          # 注意：這裡是 'git config'，不是 URL
-          git config --global http.https://huggingface.co/.extraheader "Authorization: Bearer ${{ secrets.HF_TOKEN }}"
-          
-          # 4. 推送
+
+          # 3. ⭐️ 驗證配置 (.netrc 方案)
+          # 使用 .netrc 文件是解決 Git/LFS 在 CI 環境下驗證問題的最穩健方法
+          # 注意：這裡使用 $HF_TOKEN 環境變量，它是安全的
+          echo "machine huggingface.co login AlchemistAIDev01 password $HF_TOKEN" > ~/.netrc
+          chmod 600 ~/.netrc
+
+          # 4. 推送代碼
+          # 將本地的 production 分支強制推送到遠端的 main 分支
           git push --force space production:main

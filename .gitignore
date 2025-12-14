@@ -41,3 +41,10 @@ ENV/
 .env
 .env.local
 .env.*.local
+
+# 忽略所有模型文件，因為我已經手動上傳到 HF 了
+*.pth
+*.bin
+*.onnx
+final_model/
+predict/model/

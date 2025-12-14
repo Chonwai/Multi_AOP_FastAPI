@@ -19,12 +19,20 @@ jobs:
           git config --global user.email "alchemist.dev01@gmail.com"
           git config --global user.name "AlchemistAIDev01"
           
-          # 2. 強制清空可能存在的 credential helper
+          # 1. 強制清空可能存在的 credential helper
           git config --global --unset credential.helper || true
 
-          # 3. 添加遠端倉庫 (⚠️ 使用正確的 Secret 名稱)
-          # 注意：這裡改成了 HF_ALCHEMISTAIDEV01
+          # 2. 安裝並配置 LFS (關鍵步驟！)
+          git lfs install
+          # 確保所有 .pth 和 .bin 文件都被 LFS 追蹤
+          git lfs track "*.pth"
+          git lfs track "*.bin"
+          git lfs track "*.onnx"
+          
+          # 3. 添加遠端倉庫
           git remote add space https://AlchemistAIDev01:${{ secrets.HF_ALCHEMISTAIDEV01 }}@huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
 
-          # 4. 推送
+          # 4. 推送 (確保 LFS 對象也能被推送)
+          # 注意：有时候 git push 不會自動推 LFS，需要先推 LFS 對象
+          git lfs push --all space production
           git push --force space production:main

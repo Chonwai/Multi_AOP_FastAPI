@@ -25,7 +25,9 @@ jobs:
           git config --global user.email "alchemist.dev01@gmail.com"
           git config --global user.name "AlchemistAIDev01"
           
-          git remote add space https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$SPACE_NAME
+          # ⚠️ 關鍵修改：直接使用 GitHub Actions 的變量替換語法
+          # 這樣在命令執行前，GitHub 會先把 Token 填進去，避免 Shell 讀不到的問題
+          git remote add space https://AlchemistAIDev01:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
           
           # 修改 3: 把當前的分支 (production) 推送到遠端 (space) 的 main 分支
           # 格式: git push <remote> <local_branch>:<remote_branch>

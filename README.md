@@ -1,3 +1,12 @@
+---
+title: Multi AOP FastAPI  # 你的 Space 顯示名稱
+emoji: 🚀               # 選一個你喜歡的 emoji
+colorFrom: blue         # 顏色漸變起始 (blue, green, indigo, etc.)
+colorTo: purple         # 顏色漸變結束
+sdk: docker             # ⚠️ 這是最關鍵的一行！告訴 HF 這是 Docker Space
+app_port: 7860          # 告訴 HF 你的容器監聽哪個端口 (我們之前設了 7860)
+---
+
 # Multi-AOP: A Lightweight Multi-View Deep Learning Framework for Antioxidant Peptide Discovery
 
 ## Description

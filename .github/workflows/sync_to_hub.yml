@@ -19,24 +19,12 @@ jobs:
           git config --global user.email "alchemist.dev01@gmail.com"
           git config --global user.name "AlchemistAIDev01"
           
-          # 1. 清理工作目錄，確保沒有未暫存的變更
-          # 這是解決 "Cannot rewrite branches: You have unstaged changes" 錯誤的關鍵步驟
-          git reset --hard HEAD
-          git clean -fd
-          
-          # 2. 配置遠端（處理可能已存在的 remote）
+          # 1. 配置遠端（處理可能已存在的 remote）
           git config --global --unset credential.helper || true
           git remote remove space || true  # 如果 remote 已存在則移除
           git remote add space https://AlchemistAIDev01:${{ secrets.HF_ALCHEMISTAIDEV01 }}@huggingface.co/spaces/AlchemistAIDev01/Multi_AOP_FastAPI
-
-          # 3. 設置環境變量以抑制 filter-branch 的警告
-          export FILTER_BRANCH_SQUELCH_WARNING=1
           
-          # 4. ⭐️ 魔法步驟：暴力移除歷史中的大文件
-          # 這行命令會從當前分支的所有歷史記錄中，徹底刪除所有 .pth 和 .bin 文件
-          # --cached 表示只刪除索引，不刪除工作目錄文件 (但在 CI 裡刪了也沒事)
-          # --ignore-unmatch 避免文件不存在時報錯
-          git filter-branch --force --index-filter "git rm --cached --ignore-unmatch *.pth *.bin *.onnx final_model/* predict/model/*" --prune-empty --tag-name-filter cat -- --all
-
-          # 5. 推送 (使用 --force 是必須的，因為歷史被我們改寫了)
-          git push --force space production:main
+          # 2. 推送到 HuggingFace Space
+          # 歷史清理（移除大文件）應在本地完成（例如使用 git filter-repo），
+          # CI 僅負責同步 production 分支到 Space，避免在 Actions 中重寫歷史。
+          git push space production:main

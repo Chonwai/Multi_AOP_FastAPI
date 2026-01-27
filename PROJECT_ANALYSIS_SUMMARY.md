@@ -1,12 +1,15 @@
 # Multi-AOP 項目深度分析報告
 
+**最後更新**: 2024 (已完成 Adapter Pattern 重構)
+
 ## 📊 執行摘要
 
 **項目名稱**: Multi-AOP FastAPI  
 **項目類型**: 生物信息學/藥物發現 AI 微服務  
 **核心功能**: 抗氧化肽（Antioxidant Peptide）預測  
-**技術架構**: FastAPI + PyTorch + Docker  
-**部署平台**: HuggingFace Spaces (已修復配置問題)
+**技術架構**: FastAPI + PyTorch + Docker + Adapter Pattern  
+**部署平台**: HuggingFace Spaces (已修復配置問題)  
+**團隊協作**: 雙人維護架構（Algorithm Engineer + Fullstack Engineer）
 
 ---
 
@@ -44,10 +47,16 @@ Multi-AOP 是一個**輕量級多視圖深度學習框架**，用於抗氧化肽
 
 ## 🏗️ 技術架構深度分析
 
-### 1. 代碼組織結構
+### 1. 代碼組織結構（重構後）
 
+**新增 Adapter 層** (2024重構):
 ```
 app/
+├── adapters/                 # 🆕 適配器層（封裝核心算法）
+│   ├── __init__.py           # 導出 CoreAdapter
+│   ├── interfaces.py         # 接口定義（IPredictorCore, IDataProcessor, IModelInfo）
+│   ├── core_adapter.py       # 核心適配器（封裝 predict/ 調用）
+│   └── exceptions.py         # 適配器異常
 ├── api/
 │   ├── v1/routes.py          # API 路由定義
 │   ├── middleware.py         # 中間件（異常處理）
@@ -55,13 +64,13 @@ app/
 ├── core/
 │   ├── data/
 │   │   ├── dataloader.py     # 數據加載器（工廠模式）
-│   │   └── processors.py     # 數據預處理
+│   │   └── processors.py     # 🔄 數據預處理（委託給 Adapter）
 │   └── models/
 │       ├── aop_def.py        # 組合模型定義
 │       ├── graph_model_def.py # MPNN 圖模型
 │       └── seq_model_def.py  # xLSTM 序列模型
 ├── services/
-│   ├── model_manager.py      # 模型管理器（單例模式）
+│   ├── model_manager.py      # 🔄 模型管理器（使用 CoreAdapter）
 │   └── predictor.py          # 預測服務
 ├── models/
 │   ├── request.py            # API 請求模型（Pydantic）
@@ -72,9 +81,113 @@ app/
 │   └── validators.py         # 輸入驗證
 ├── config.py                 # 配置管理（單例模式）
 └── main.py                   # FastAPI 應用入口
+
+predict/                       # ⚠️ 上游核心算法（不直接修改）
+├── aop_def.py                 # CombinedModel 定義
+├── aop_dataloader.py          # 數據處理函數
+├── seq_model_def.py           # xLSTM 模型
+├── graph_model_def.py         # MPNN 模型
+└── model/                     # 訓練好的模型文件
 ```
 
+#### 依賴流向圖
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  API Layer (app/api/)                                         │
+│    - routes.py: 定義 REST endpoints                          │
+│    - middleware.py: 異常處理                                  │
+└────────────────────────┬─────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│  Service Layer (app/services/)                                │
+│    - predictor.py: 預測邏輯                                   │
+│    - model_manager.py: 模型生命週期管理                       │
+└────────────────┬─────────────────────────┬───────────────────┘
+                 ↓                         ↓
+    ┌────────────────────────┐   ┌───────────────────────────┐
+    │  Data Layer            │   │  Adapter Layer 🆕          │
+    │  (app/core/data/)      │   │  (app/adapters/)          │
+    │  - dataloader.py       │   │  - core_adapter.py        │
+    │  - processors.py       │   │  - interfaces.py          │
+    └────────────┬───────────┘   └───────────┬───────────────┘
+                 │                           │
+                 └───────────┬───────────────┘
+                             ↓
+                ┌────────────────────────────┐
+                │  Core Algorithm Layer      │
+                │  (predict/)                │
+                │  - aop_def.py              │
+                │  - aop_dataloader.py       │
+                │  - seq_model_def.py        │
+                │  - graph_model_def.py      │
+                └────────────────────────────┘
+```
+
+**關鍵改進**:
+- ✅ **隔離上游算法**: app/services 不直接導入 predict/
+- ✅ **統一接口**: 所有核心算法調用通過 CoreAdapter
+- ✅ **易於同步**: 上游更新只需修改 Adapter 層
+- ✅ **團隊協作**: 清晰的維護邊界
+
+---
+
 ### 2. 設計模式應用（業界標準）
+
+#### ✅ Adapter Pattern (適配器模式) 🆕
+
+**應用場景: CoreAdapter**
+
+```python
+# app/adapters/core_adapter.py
+class CoreAdapter(IPredictorCore, IDataProcessor, IModelInfo):
+    """
+    核心算法適配器
+    
+    封裝對 predict/ 目錄中核心算法的所有調用。
+    當上游算法更新時，只需要修改這個類的實現。
+    """
+    
+    def load_model(self, model_path: str, device: torch.device):
+        """適配上游的模型加載邏輯"""
+        from aop_def import CombinedModel
+        checkpoint = torch.load(model_path, map_location=device)
+        model = CombinedModel(...)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        return model
+    
+    def aa_to_int(self, sequence: str) -> List[int]:
+        """適配上游的氨基酸編碼"""
+        from aop_dataloader import aa_to_int
+        return aa_to_int(sequence)
+    
+    def mol_to_graph(self, mol) -> Data:
+        """適配上游的分子圖轉換"""
+        from aop_dataloader import mol_to_graph
+        return mol_to_graph(mol)
+```
+
+**設計亮點**:
+- ✅ **單一職責**: 只負責封裝上游算法調用
+- ✅ **接口隔離**: 定義 3 個清晰接口（IPredictorCore, IDataProcessor, IModelInfo）
+- ✅ **依賴反轉**: Service 層依賴抽象接口，不依賴具體實現
+- ✅ **開閉原則**: 對擴展開放（可添加新方法），對修改封閉（上游更新不影響 Service）
+
+**團隊協作**:
+```
+Algorithm Engineer (CaiJianxiu)    Fullstack Engineer (你)
+          ↓                                ↓
+    predict/                         app/adapters/
+    aop_def.py                       core_adapter.py
+    aop_dataloader.py                interfaces.py
+          ↓                                ↓
+    維護核心算法                      封裝算法調用
+    更新模型結構                      適配接口變化
+          ↓                                ↓
+    git push upstream ──→ git pull upstream ──→ 修改 Adapter
+```
+
+---
 
 #### ✅ Singleton Pattern (單例模式)
 

@@ -1,6 +1,8 @@
 """
 Model Manager (Singleton Pattern)
 Manages the lifecycle of the PyTorch model
+
+Modified to use CoreAdapter for loading upstream core algorithm models.
 """
 
 import threading
@@ -9,7 +11,7 @@ from typing import Optional
 import torch
 
 from app.config import settings
-from app.core.models.aop_def import CombinedModel
+from app.adapters.core_adapter import get_core_adapter
 from app.utils.exceptions import ModelLoadError
 from app.utils.logging_config import get_logger
 
@@ -97,71 +99,17 @@ class ModelManager:
                 
                 logger.info(f"Loading model from {model_path} on device {self._device}")
                 
-                # Initialize model
-                model = CombinedModel(device=self._device)
+                # Use CoreAdapter to load model from upstream core algorithm
+                # This delegates to predict/aop_def.py CombinedModel
+                adapter = get_core_adapter()
+                model = adapter.load_model(str(model_path), self._device)
                 
-                # Load model weights
-                checkpoint = torch.load(model_path, map_location=self._device)
-                
-                # Handle different checkpoint formats
-                # Extract state dict from checkpoint
-                if isinstance(checkpoint, dict):
-                    if 'model_state_dict' in checkpoint:
-                        checkpoint_state_dict = checkpoint['model_state_dict']
-                    else:
-                        checkpoint_state_dict = checkpoint
-                else:
-                    checkpoint_state_dict = checkpoint
-                
-                # Filter out keys with shape mismatches before loading
-                # This is necessary when model structure changes (e.g., backend change in xlstm)
-                model_state_dict = model.state_dict()
-                filtered_state_dict = {}
-                skipped_keys = []
-                
-                for key, value in checkpoint_state_dict.items():
-                    if key in model_state_dict:
-                        # Check if shapes match
-                        if model_state_dict[key].shape == value.shape:
-                            filtered_state_dict[key] = value
-                        else:
-                            skipped_keys.append(f"{key}: checkpoint {value.shape} vs model {model_state_dict[key].shape}")
-                    else:
-                        # Key not in model, skip it
-                        skipped_keys.append(f"{key}: not in model")
-                
-                # Load filtered state dict
-                missing_keys, unexpected_keys = model.load_state_dict(
-                    filtered_state_dict, strict=False
-                )
-                
-                # Log information about loading
-                loaded_count = len(filtered_state_dict)
-                total_checkpoint_keys = len(checkpoint_state_dict)
-                logger.info(f"Loaded {loaded_count}/{total_checkpoint_keys} weights from checkpoint")
-                
-                if skipped_keys:
-                    logger.warning(f"Skipped {len(skipped_keys)} keys due to shape mismatch or missing:")
-                    for key_info in skipped_keys[:10]:  # Show first 10
-                        logger.warning(f"  - {key_info}")
-                    if len(skipped_keys) > 10:
-                        logger.warning(f"  ... and {len(skipped_keys) - 10} more")
-                
-                if missing_keys:
-                    logger.warning(f"Missing keys in checkpoint: {missing_keys[:5]}...")
-                    logger.warning(f"Total missing keys: {len(missing_keys)}")
-                
-                if unexpected_keys:
-                    logger.info(f"Unexpected keys in checkpoint (ignored): {unexpected_keys[:5]}...")
-                    logger.info(f"Total unexpected keys: {len(unexpected_keys)}")
-                
-                # Move model to device and set to eval mode
-                model.to(self._device)
-                model.eval()
+                # Model is already loaded and configured by adapter
+                # No need for manual checkpoint loading or state_dict filtering
                 
                 self._model = model
                 
-                logger.info(f"Model loaded successfully on {self._device}")
+                logger.info(f"Model loaded successfully via CoreAdapter on {self._device}")
                 return self._model
                 
             except Exception as e:

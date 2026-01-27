@@ -1,15 +1,28 @@
 """
 Data processing utilities for amino acid sequences
+
+DEPRECATED: This module is being phased out.
+These functions now delegate to CoreAdapter which wraps the upstream core algorithm.
+For new code, import from app.adapters.core_adapter directly.
 """
 
 import torch
 from rdkit import Chem
 from torch_geometric.data import Data
 
+# Import CoreAdapter to delegate to upstream core algorithm
+from app.adapters.core_adapter import get_core_adapter
+
+# Get adapter instance
+_adapter = get_core_adapter()
+
 
 def aa_to_int(sequence: str) -> list[int]:
     """
     Convert amino acid sequence to integer encoding
+    
+    DEPRECATED: Use CoreAdapter.aa_to_int() instead.
+    This function delegates to the upstream core algorithm via CoreAdapter.
     
     Args:
         sequence: Amino acid sequence string
@@ -17,16 +30,15 @@ def aa_to_int(sequence: str) -> list[int]:
     Returns:
         List of integers representing amino acids
     """
-    aa_to_int_dict = {
-        'A': 0, 'R': 1, 'N': 2, 'D': 3, 'C': 4, 'E': 5, 'Q': 6, 'G': 7, 'H': 8, 'I': 9,
-        'L': 10, 'K': 11, 'M': 12, 'F': 13, 'P': 14, 'S': 15, 'T': 16, 'W': 17, 'Y': 18, 'V': 19
-    }
-    return [aa_to_int_dict.get(aa.upper(), -1) for aa in sequence]
+    return _adapter.aa_to_int(sequence)
 
 
 def aa_to_smiles(sequence: str) -> str:
     """
     Convert amino acid sequence to SMILES representation
+    
+    DEPRECATED: Use CoreAdapter.aa_to_smiles() instead.
+    This function delegates to the upstream core algorithm via CoreAdapter.
     
     Args:
         sequence: Amino acid sequence string
@@ -34,49 +46,15 @@ def aa_to_smiles(sequence: str) -> str:
     Returns:
         SMILES string
     """
-    aa_to_smiles_dict = {
-        'A': 'CC(N)C(=O)O', 'R': 'NC(=N)NCCCC(N)C(=O)O', 'N': 'NC(=O)CC(N)C(=O)O',
-        'D': 'OC(=O)CC(N)C(=O)O', 'C': 'SC(C(N)C(=O)O)', 'E': 'OC(=O)CCC(N)C(=O)O',
-        'Q': 'NC(=O)CCC(N)C(=O)O', 'G': 'NCC(=O)O', 'H': 'NC(Cc1c[nH]cn1)C(=O)O',
-        'I': 'CC(C)CC(N)C(=O)O', 'L': 'CC(C)CC(N)C(=O)O', 'K': 'NCCCCC(N)C(=O)O',
-        'M': 'CSCCC(N)C(=O)O', 'F': 'NC(Cc1ccccc1)C(=O)O', 'P': 'O=C(O)C1CCCN1',
-        'S': 'OCC(N)C(=O)O', 'T': 'CC(O)C(N)C(=O)O', 'W': 'NC(Cc1c[nH]c2ccccc12)C(=O)O',
-        'Y': 'NC(Cc1ccc(O)cc1)C(=O)O', 'V': 'CC(C)C(N)C(=O)O'
-    }
-    smiles_list = [aa_to_smiles_dict.get(aa.upper(), '') for aa in sequence]
-    return '.'.join([s for s in smiles_list if s])
-
-
-def get_atom_features(atom) -> list:
-    """
-    Extract atom features for graph representation
-    
-    Args:
-        atom: RDKit atom object
-    
-    Returns:
-        List of atom features
-    """
-    features = [
-        atom.GetAtomicNum(),
-        atom.GetDegree(),
-        atom.GetFormalCharge(),
-        atom.GetNumRadicalElectrons(),
-        atom.GetIsAromatic(),
-        int(atom.GetHybridization()),
-        atom.GetNumImplicitHs(),
-        int(atom.GetChiralTag()),
-        len(atom.GetNeighbors()),
-        atom.IsInRing(),
-        atom.GetMass(),
-        atom.GetTotalValence()
-    ]
-    return features
+    return _adapter.aa_to_smiles(sequence)
 
 
 def mol_to_graph(mol) -> Data:
     """
     Convert RDKit molecule to PyTorch Geometric Data object
+    
+    DEPRECATED: Use CoreAdapter.mol_to_graph() instead.
+    This function delegates to the upstream core algorithm via CoreAdapter.
     
     Args:
         mol: RDKit molecule object
@@ -84,45 +62,7 @@ def mol_to_graph(mol) -> Data:
     Returns:
         PyTorch Geometric Data object
     """
-    if mol is None:
-        # Return empty graph if molecule is None
-        return Data(
-            x=torch.zeros((1, 12), dtype=torch.float),
-            edge_index=torch.zeros((2, 0), dtype=torch.long),
-            edge_attr=torch.zeros((0, 3), dtype=torch.float)
-        )
-    
-    # Get atom features
-    atom_features = []
-    for atom in mol.GetAtoms():
-        atom_features.append(get_atom_features(atom))
-
-    x = torch.tensor(atom_features, dtype=torch.float)
-
-    # Get edge indices and features
-    edges = []
-    edge_features = []
-    for bond in mol.GetBonds():
-        i = bond.GetBeginAtomIdx()
-        j = bond.GetEndAtomIdx()
-        edges.append([i, j])
-        edges.append([j, i])
-
-        feature = [
-            bond.GetBondTypeAsDouble(),
-            bond.GetIsConjugated(),
-            bond.GetIsAromatic()
-        ]
-        edge_features.extend([feature, feature])
-
-    if len(edges) > 0:
-        edge_index = torch.tensor(edges, dtype=torch.long).t()
-        edge_attr = torch.tensor(edge_features, dtype=torch.float)
-    else:
-        edge_index = torch.zeros((2, 0), dtype=torch.long)
-        edge_attr = torch.zeros((0, 3), dtype=torch.float)
-    
-    return Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+    return _adapter.mol_to_graph(mol)
 
 
 def process_sequence(sequence: str, seq_length: int = 50) -> tuple[torch.Tensor, Data]:

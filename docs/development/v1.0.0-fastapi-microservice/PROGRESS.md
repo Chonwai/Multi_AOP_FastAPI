@@ -35,6 +35,7 @@
   - ✅ Docker build 成功（multi-aop-api:latest）
   - ✅ Docker 容器啟動成功（CPU 模式）
   - ✅ /health、/api/v1/model/info、/predict/single、/predict/batch 驗證通過
+  - ✅ 產出 Docker API 驗證報告（2026-02-03）
 
 **進行中的任務**：
 - 無

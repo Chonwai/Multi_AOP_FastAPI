@@ -15,6 +15,41 @@
 
 ## 📅 進度更新日誌
 
+### 2026-01-27
+
+**階段**：階段 4 - 驗證和文檔（MVP版本）  
+**狀態**：🟢 已完成
+
+**完成內容**：
+- ✅ 建立 CLI vs API 一致性測試腳本
+  - ✅ 新增 `tests/compare_cli_vs_api.py`
+  - ✅ 支援自訂 `--model-path` 與 `--api-url`
+  - ✅ 以同一批序列輸入，比對 CLI `probs/preds` 與 API `probability/prediction`
+  - ✅ 設定機率容差（預設 1e-6）
+  - ✅ 新增 CPU 相容流程（Adapter CLI + in-process 服務）
+  - ✅ 修正 CLI 資料順序（關閉 shuffle）
+  - ✅ 測試結果：**一致性通過**
+  - ✅ 擴充測試序列（4 條）後一致性仍通過
+  - ✅ 將 .venv311 加入 .gitignore（避免虛擬環境入版）
+  - ✅ 啟動 Docker 化 API 檢查流程（依 docker/TESTING.md）
+  - ✅ Docker build 成功（multi-aop-api:latest）
+  - ✅ Docker 容器啟動成功（CPU 模式）
+  - ✅ /health、/api/v1/model/info、/predict/single、/predict/batch 驗證通過
+
+**進行中的任務**：
+- 無
+
+**下一步計劃**：
+- [ ] 申請/輸出 CPU 版 checkpoint（避免跳過權重）
+- [ ] 加入 CI 中的 CPU 一致性測試（可選）
+- [ ] （可選）補齊 Docker 測試腳本自動化
+
+**備註**：
+- 若出現 `xlstm`/`rdkit` 缺失，需先完成依賴安裝
+- 測試腳本需在 API 啟動後執行
+- 目前 CPU 模式會跳過 2 個 shape mismatch 權重，建議後續提供 CPU 專用 checkpoint
+- Docker build 受阻：Docker daemon 尚未啟動（需先開啟 Docker Desktop）
+
 ### 2024-12-19
 
 **階段**：階段 0 - 準備工作  

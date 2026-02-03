@@ -51,6 +51,16 @@ except ImportError as e:
         "Please ensure the 'predict/' directory contains the required modules."
     ) from e
 
+# 修正 xLSTM 在 CPU 環境的後端設定（上游預設為 "cpu"，但 xlstm 僅支援 "vanilla"/"cuda"）
+try:
+    import seq_model_def as _seq_model_def
+    _backend = getattr(_seq_model_def.cfg.slstm_block.slstm, "backend", None)
+    if _backend == "cpu":
+        _seq_model_def.cfg.slstm_block.slstm.backend = "vanilla"
+except Exception:
+    # 避免影響主流程，必要時由上游或環境修正
+    pass
+
 # 導入適配器接口
 from app.adapters.interfaces import IPredictorCore, IDataProcessor, IModelInfo
 from app.adapters.exceptions import (
@@ -133,8 +143,23 @@ class CoreAdapter(IPredictorCore, IDataProcessor, IModelInfo):
                 state_dict = checkpoint
                 logger.debug("Loading from state dict directly")
             
+            # 過濾形狀不匹配的權重（CPU backend 可能與 checkpoint 形狀不同）
+            model_state = model.state_dict()
+            filtered_state = {}
+            skipped_keys = []
+            for k, v in state_dict.items():
+                if k in model_state and v.shape == model_state[k].shape:
+                    filtered_state[k] = v
+                else:
+                    skipped_keys.append(k)
+
+            if skipped_keys:
+                logger.warning(
+                    f"Skipped {len(skipped_keys)} keys due to shape mismatch."
+                )
+
             # 加載權重（使用 strict=False 以支持部分加載）
-            missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
+            missing_keys, unexpected_keys = model.load_state_dict(filtered_state, strict=False)
             
             if missing_keys:
                 logger.warning(f"Missing keys when loading model: {missing_keys[:5]}...")
